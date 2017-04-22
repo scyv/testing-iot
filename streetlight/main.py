@@ -1,4 +1,4 @@
-# streetlight v0.1
+# streetlight
 # Example for the code of an IoT device that is still in development but must be tested.
 # This is the SUT - System Under Test
 
@@ -6,50 +6,90 @@ import RPi.GPIO as GPIO
 import paho.mqtt.client as mqtt
 import json
 
-streetlight_id = "1"
-mqtt_server = "10.10.10.1"
+## CONSTANTS ##################################################################
 
-#GPIO.setmode(GPIO.BOARD)
+MQTT_HOST = "10.10.10.1"
+STREETLIGHT_ID = "1"
+TOPIC_STREETLIGHT_COMMAND = "scyv/smartcity/streetlights/cmd"
+TOPIC_STREETLIGHT_STATUS = "scyv/smartcity/streetlights/status"
 
-#def my_callback(channel):
-#    print('This is a edge event callback function!')
-#    print('Edge detected on channel %s'%channel)
-#    print('This is run in a different thread to your main program')
+CHANNEL_IN_LIGHT_SENSOR = 17
+CHANNEL_OUT_LIGHT_SWITCH = 23
 
-#GPIO.add_event_detect(channel, GPIO.RISING, callback=my_callback)  # add rising edge detection on a channel
-#...the rest of your program...
+## METHODS ####################################################################
 
+def switch_light_on(cmdId):
+    GPIO.output(CHANNEL_OUT_LIGHT_SWITCH, GPIO.HIGH)
+    status = {
+        "streetlightId": STREETLIGHT_ID,
+        "light": "on",
+        "cmdId": cmdId
+    }
+    mqtt_client.publish(TOPIC_STREETLIGHT_STATUS + "/" + STREETLIGHT_ID, json.dumps(status))
+    mqtt_client.publish(TOPIC_STREETLIGHT_STATUS, json.dumps(status))
+
+def switch_light_off(cmdId):
+    GPIO.output(CHANNEL_OUT_LIGHT_SWITCH, GPIO.LOW)
+    status = {
+        "streetlightId": STREETLIGHT_ID,
+        "light": "off",
+        "cmdId": cmdId
+    }
+    mqtt_client.publish(TOPIC_STREETLIGHT_STATUS + "/" + STREETLIGHT_ID, json.dumps(status))
+    mqtt_client.publish(TOPIC_STREETLIGHT_STATUS, json.dumps(status))
+
+## SETUP MQTT CLIENT ##########################################################
 
 # The callback for when the client receives a CONNACK response from the server.
-def on_connect(client, userdata, flags, rc):
-
-    print("Connected with result code " + str(rc))
-
-    # subscribe to topics for streetlight control
-    client.subscribe("scyv/smartcity/streetlights/" + streetlight_id)
-    client.subscribe("scyv/smartcity/streetlights")
+def on_mqtt_connect(client, userdata, flags, rc):
+    print("Connected to MQTT with result code " + str(rc))
+    # listen for commands coming from the mqtt bus
+    client.subscribe(TOPIC_STREETLIGHT_COMMAND + "/" + STREETLIGHT_ID)
 
 # The callback for when a PUBLISH message is received from the server.
-def on_message(client, userdata, msg):
+def on_mqtt_message(client, userdata, msg):
+    payload_json = json.loads(msg.payload.decode('ascii'))
 
-    print(msg.topic+" "+str(msg.payload))
-    print(msg.payload)
-    parsed_json = json.loads(msg.payload.decode('ascii'))
+    if payload_json['light'] == "on":
+        switch_light_on(payload_json["cmdId"])
 
-    if parsed_json['switch'] == "Hello":
-        print("Received message #1, do something")
-        # Do something
+    if payload_json['light'] == "off":
+        switch_light_off(payload_json["cmdId"])
 
-    if parsed_json['switch'] == "World!":
-        print("Received message #2, do something else")
-        # Do something else
 
 # Create an MQTT client and attach our routines to it.
-client = mqtt.Client()
-client.on_connect = on_connect
-client.on_message = on_message
+mqtt_client = mqtt.Client()
+mqtt_client.on_connect = on_mqtt_connect
+mqtt_client.on_message = on_mqtt_message
 
-client.connect(mqtt_server, 1883, 60)
+
+## SETUP GPIOs ################################################################
+
+GPIO.setmode(GPIO.BCM)
+
+# inputs
+GPIO.setup(CHANNEL_IN_LIGHT_SENSOR, GPIO.IN)
+
+#outputs
+GPIO.setup(CHANNEL_OUT_LIGHT_SWITCH, GPIO.OUT)
+
+
+def onLightSensorFallingEdge():
+    print("It's getting dark => Switching on the light")
+    switch_light_on("")
+
+def onLightSensorRisingEdge():
+    print("It's dawn => Switching off the light")
+    switch_light_off("")
+
+# detect falling edge on light sensor (falling means: It's dark)
+GPIO.add_event_detect(CHANNEL_IN_LIGHT_SENSOR, GPIO.FALLING, callback=onLightSensorFallingEdge, bouncetime=200)
+
+# detect rising edge on light sensor (rising means: It's bright outside)
+GPIO.add_event_detect(CHANNEL_IN_LIGHT_SENSOR, GPIO.RISING, callback=onLightSensorRisingEdge, bouncetime=200)
+
+
+mqtt_client.connect(MQTT_HOST, 1883, 60)
 
 # Process network traffic and dispatch callbacks.
-client.loop_forever()
+mqtt_client.loop_forever()
