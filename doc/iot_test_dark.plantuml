@@ -1,0 +1,98 @@
+
+Sequence for a test that reacts on manipulation of the GPIOs of our SUT by sending a message to the mqtt:
+
+@startuml iot_test_gpio_msg
+skinparam monochrome true
+skinparam sequenceMessageAlign center
+
+participant TestBox as IOTTB
+participant StreetLight as SUT
+participant MQTT
+
+activate IOTTB
+activate SUT
+activate MQTT
+
+IOTTB-->MQTT: subscribe /iot/screetlights/status/xy
+IOTTB->SUT: it's dark (rising edge on GPIO)
+SUT->SUT: switch the light on
+IOTTB->IOTTB: expect mqtt message\nwithin a short amount of time
+SUT->MQTT: publish /iot/streetlights/status/xy\n{ light: on } 
+MQTT-->IOTTB: onMessage
+IOTTB->IOTTB: assert(light).toBe(on)
+...
+@enduml
+
+
+Sequence for a test that sends a command via mqtt and waits for confirmation message of the SUT:
+
+@startuml iot_test_msg_msg
+skinparam monochrome true
+skinparam sequenceMessageAlign center
+
+participant TestBox as IOTTB
+participant StreetLight as SUT
+participant MQTT
+
+activate IOTTB
+activate SUT
+activate MQTT
+
+IOTTB-->MQTT: subscribe /iot/screetlights/status/xy
+SUT-->MQTT: subscribe /iot/screetlights/cmd/xy
+IOTTB->MQTT: publish /iot/streetlights/cmd/xy\n{ light: on, cmdId: 1 }
+note right of MQTT: cmdId identifies\nthe command later
+IOTTB->IOTTB: expect mqtt message\nwithin a short amount of time
+MQTT-->SUT: onMessage
+SUT->SUT: switch the light on
+SUT->MQTT: publish /iot/streetlights/status/xy\n{ light: on, cmdId: 1 } 
+MQTT-->IOTTB: onMessage
+IOTTB->IOTTB: assert(light).toBe(on)
+...
+@enduml
+
+Sequence for a test that sends a command via mqtt and waits for change on a distinct GPIO of the SUT:
+
+@startuml iot_test_msg_gpio
+skinparam monochrome true
+skinparam sequenceMessageAlign center
+
+participant TestBox as IOTTB
+participant StreetLight as SUT
+participant MQTT
+
+activate IOTTB
+activate SUT
+activate MQTT
+
+SUT-->MQTT: subscribe /iot/screetlights/cmd/xy
+IOTTB->MQTT: publish /iot/streetlights/cmd/xy\n{ light: on, cmdId: 2 }
+IOTTB->IOTTB: expect rising edge on GPIO\nwithin a short amount of time
+MQTT-->SUT: onMessage
+SUT->SUT: switch the light on
+SUT-->IOTTB: rising edge on GPIO
+IOTTB->IOTTB: assert(light).toBe(on)
+...
+@enduml
+
+Sequence for a test that reacts on manipulation of the GPIOs of our SUT adjusting its GPIOS (switch the light on):
+
+@startuml iot_test_gpio_gpio
+skinparam monochrome true
+skinparam sequenceMessageAlign center
+
+participant TestBox as IOTTB
+participant StreetLight as SUT
+participant MQTT
+
+activate IOTTB
+activate SUT
+activate MQTT
+
+IOTTB->SUT: it's dark (rising edge on GPIO)
+IOTTB->IOTTB: expect rising edge on GPIO\nwithin a short amount of time
+SUT->SUT: switch the light on
+SUT-->IOTTB: rising edge on GPIO
+IOTTB->IOTTB: assert(light).toBe(on)
+...
+@enduml

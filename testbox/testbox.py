@@ -7,7 +7,7 @@ import paho.mqtt.client as mqtt
 import json
 
 streetlight_id = "1"
-mqtt_server = "192.168.10.24"
+mqtt_server = "10.10.10.1"
 
 #GPIO.setmode(GPIO.BOARD)
 

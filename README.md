@@ -6,5 +6,7 @@ The following Sequences show the principle, how we will do the tests:
 
 ![Sequenz1](./doc/iot_test_lights_on.png)
 
-![Sequenz2](./doc/iot_test_rain.png)
+![Sequenz2](./doc/iot_test_lights_on_gpio.png)
+
+![Sequenz3](./doc/iot_test_rain.png)
 
