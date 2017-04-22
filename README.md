@@ -4,9 +4,11 @@ This project contains code for "Testing IoT".
 
 The following Sequences show the principle, how we will do the tests:
 
-![Sequenz1](./doc/iot_test_lights_on.png)
+![SequenzGPIO_GPIO](./doc/iot_test_gpio_gpio.png)
 
-![Sequenz2](./doc/iot_test_lights_on_gpio.png)
+![SequenzGPIO_MQTT](./doc/iot_test_gpio_msg.png)
 
-![Sequenz3](./doc/iot_test_rain.png)
+![SequenzMQTT_MQTT](./doc/iot_test_msg_msg.png)
+
+![SequenzMQTT_GPIO](./doc/iot_test_msg_gpio.png)
 
