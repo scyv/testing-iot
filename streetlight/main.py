@@ -8,37 +8,13 @@ import json
 
 ## CONSTANTS ##################################################################
 
-MQTT_HOST = "10.10.10.1"
+MQTT_HOST = "<MQTT_HOST>"
 STREETLIGHT_ID = "1"
 TOPIC_STREETLIGHT_COMMAND = "scyv/smartcity/streetlights/cmd"
 TOPIC_STREETLIGHT_STATUS = "scyv/smartcity/streetlights/status"
 
 CHANNEL_IN_LIGHT_SENSOR = 17
 CHANNEL_OUT_LIGHT_SWITCH = 23
-
-## METHODS ####################################################################
-
-
-def switch_light_on(cmdId):
-    GPIO.output(CHANNEL_OUT_LIGHT_SWITCH, GPIO.HIGH)
-    status = {
-        "streetlightId": STREETLIGHT_ID,
-        "light": "on",
-        "cmdId": cmdId
-    }
-    mqtt_client.publish(TOPIC_STREETLIGHT_STATUS + "/" + STREETLIGHT_ID, json.dumps(status))
-    mqtt_client.publish(TOPIC_STREETLIGHT_STATUS, json.dumps(status))
-
-
-def switch_light_off(cmdId):
-    GPIO.output(CHANNEL_OUT_LIGHT_SWITCH, GPIO.LOW)
-    status = {
-        "streetlightId": STREETLIGHT_ID,
-        "light": "off",
-        "cmdId": cmdId
-    }
-    mqtt_client.publish(TOPIC_STREETLIGHT_STATUS + "/" + STREETLIGHT_ID, json.dumps(status))
-    mqtt_client.publish(TOPIC_STREETLIGHT_STATUS, json.dumps(status))
 
 ## SETUP MQTT CLIENT ##########################################################
 
@@ -80,29 +56,47 @@ GPIO.setup(CHANNEL_OUT_LIGHT_SWITCH, GPIO.OUT)
 
 def init_gpios():
     light_sensor_state = GPIO.input(CHANNEL_IN_LIGHT_SENSOR)
-    if (light_sensor_state == GPIO.HIGH):
+    if light_sensor_state == GPIO.HIGH:
         GPIO.output(CHANNEL_OUT_LIGHT_SWITCH, GPIO.LOW)
     else:
         GPIO.output(CHANNEL_OUT_LIGHT_SWITCH, GPIO.HIGH)
 
 
-def on_light_sensor_low():
-    print("It's getting dark => Switching on the light")
-    switch_light_on("")
+def switch_light_on(cmdId):
+    print("Switching the light: ON")
+    GPIO.output(CHANNEL_OUT_LIGHT_SWITCH, GPIO.HIGH)
+    status = {
+        "streetlightId": STREETLIGHT_ID,
+        "light": "on",
+        "cmdId": cmdId
+    }
+    mqtt_client.publish(TOPIC_STREETLIGHT_STATUS + "/" + STREETLIGHT_ID, json.dumps(status))
+    mqtt_client.publish(TOPIC_STREETLIGHT_STATUS, json.dumps(status))
 
 
-def on_light_sensor_high():
-    print("It's dawn => Switching off the light")
-    switch_light_off("")
+def switch_light_off(cmdId):
+    print("Switching the light: OFF")
+    GPIO.output(CHANNEL_OUT_LIGHT_SWITCH, GPIO.LOW)
+    status = {
+        "streetlightId": STREETLIGHT_ID,
+        "light": "off",
+        "cmdId": cmdId
+    }
+    mqtt_client.publish(TOPIC_STREETLIGHT_STATUS + "/" + STREETLIGHT_ID, json.dumps(status))
+    mqtt_client.publish(TOPIC_STREETLIGHT_STATUS, json.dumps(status))
+
+
+def on_light_sensor_event():
+    light_sensor_state = GPIO.input(CHANNEL_IN_LIGHT_SENSOR)
+    if (light_sensor_state == GPIO.HIGH):
+        switch_light_off("")
+    else:
+        switch_light_on("")
 
 init_gpios()
 
-# detect falling edge on light sensor (falling means: It's dark)
-GPIO.add_event_detect(CHANNEL_IN_LIGHT_SENSOR, GPIO.FALLING, callback=on_light_sensor_low, bouncetime=200)
-
-# detect rising edge on light sensor (rising means: It's bright outside)
-GPIO.add_event_detect(CHANNEL_IN_LIGHT_SENSOR, GPIO.RISING, callback=on_light_sensor_high, bouncetime=200)
-
+# detect edge on light sensor (falling means "It's dark", rising means "It's bright")
+GPIO.add_event_detect(CHANNEL_IN_LIGHT_SENSOR, GPIO.BOTH, callback=on_light_sensor_event, bouncetime=200)
 
 mqtt_client.connect(MQTT_HOST, 1883, 60)
 
