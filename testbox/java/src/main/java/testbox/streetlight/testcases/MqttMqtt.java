@@ -41,7 +41,7 @@ public class MqttMqtt {
 	}
 
 	@Test
-	public void testLightsOn() throws Exception {
+	public void testLightsOnResponseWhenMessageSent() throws Exception {
 
 		final Status resultingStatus = new Status(Status.STATUS_OFF, Constants.CMD_ON_ID);
 		final MqttLightStatusCallback callback = new MqttLightStatusCallback(resultingStatus);
@@ -63,10 +63,10 @@ public class MqttMqtt {
 	}
 	
 	@Test
-	public void testLightsOff() throws Exception {
+	public void testLightsOffResponseWhenMessageSent() throws Exception {
 
 		// first switch the lights on
-		testLightsOn();
+		testLightsOnResponseWhenMessageSent();
 		
 		final Status resultingStatus = new Status(Status.STATUS_ON, Constants.CMD_OFF_ID);
 		final MqttLightStatusCallback callback = new MqttLightStatusCallback(resultingStatus);

@@ -6,11 +6,17 @@ import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
 
+import testbox.streetlight.testcases.GpioGpio;
 import testbox.streetlight.testcases.MqttGpio;
 import testbox.streetlight.testcases.MqttMqtt;
 
 public class TestRunner {
 
+	
+	private static final Class<?>[] TESTCLASSES = {
+		GpioGpio.class, MqttGpio.class, MqttMqtt.class
+	};
+	
 	public static void main(String[] args) {
 
 		JUnitCore junitCore = new JUnitCore();
@@ -36,7 +42,7 @@ public class TestRunner {
 				System.out.println(" [IGNORED]");
 			}
 		});
-		Result result = junitCore.run(MqttGpio.class, MqttMqtt.class);
+		Result result = junitCore.run(TESTCLASSES);
 
 		System.out.println("----------------------------------");
 		if (result.wasSuccessful()) {

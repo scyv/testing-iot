@@ -2,14 +2,9 @@ package testbox.streetlight.testcases;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.eclipse.paho.client.mqttv3.MqttClient;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -23,29 +18,17 @@ import com.pi4j.io.gpio.RaspiPin;
 import com.pi4j.io.gpio.event.GpioPinDigitalStateChangeEvent;
 import com.pi4j.io.gpio.event.GpioPinListenerDigital;
 
-import testbox.streetlight.Constants;
 import testbox.streetlight.WaitForCondition;
 
-public class MqttGpio {
+public class GpioGpio {
 
-	private static final String SUT_ID = "1";
-	private final GpioController gpio = GpioFactory.getInstance();
+	private static final GpioController gpio = GpioFactory.getInstance();
 
-	private static MqttClient client;
-
-	private GpioPinDigitalOutput outputLightSensor;
-	private GpioPinDigitalInput inputLightStatus;
+	private static GpioPinDigitalOutput outputLightSensor;
+	private static GpioPinDigitalInput inputLightStatus;
 
 	@BeforeClass
-	public static void setupMqtt() throws Exception {
-		client = new MqttClient(Constants.MQTT_HOST, Constants.CLIENT_ID, new MemoryPersistence());
-		MqttConnectOptions connOpts = new MqttConnectOptions();
-		connOpts.setCleanSession(true);
-		client.connect(connOpts);		
-	}
-	
-	@Before
-	public void setupGPIOs() throws Exception {
+	public static void setup() throws Exception {
 		inputLightStatus = gpio.provisionDigitalInputPin(RaspiPin.GPIO_04, PinPullResistance.PULL_DOWN);
 		outputLightSensor = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_00, PinState.HIGH);
 		inputLightStatus.setShutdownOptions(true, PinState.LOW, PinPullResistance.OFF);
@@ -54,24 +37,24 @@ public class MqttGpio {
 
 	@AfterClass
 	public static void disconnect() throws Exception {
-		client.disconnect();
+		gpio.shutdown();
 	}
 
 	@After
 	public void reset() throws Exception {
 		inputLightStatus.removeAllListeners();
-		MqttMessage message = new MqttMessage(Constants.LIGHT_OFF_MESSAGE.getBytes());
-		client.publish(Constants.TOPIC_STREETLIGHT_COMMAND + "/" + SUT_ID, message);
-		gpio.shutdown();
+		outputLightSensor.setState(PinState.HIGH);		
 	}
 
 	@Test
-	public void testLightsOnWhenMessageSent() throws Exception {
+	public void testLightsOnWhenItsDark() throws Exception {
+		// simulate signal: "Its Dark!"
+		outputLightSensor.setState(PinState.LOW);
+		
 		final AtomicBoolean stateChanged = new AtomicBoolean(false);
 		final PinState[] state = new PinState[1];
 		state[0] = PinState.LOW;
-
-		// wait for GPIO
+		// wait for GPIO HIGH on input
 		inputLightStatus.addListener(new GpioPinListenerDigital() {
 
 			public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event) {
@@ -80,9 +63,6 @@ public class MqttGpio {
 			}
 		});
 
-		// send message
-		MqttMessage message = new MqttMessage(Constants.LIGHT_ON_MESSAGE.getBytes());
-		client.publish(Constants.TOPIC_STREETLIGHT_COMMAND + "/" + SUT_ID, message);
 				
 		new WaitForCondition() {
 

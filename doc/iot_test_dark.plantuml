@@ -14,7 +14,7 @@ activate SUT
 activate MQTT
 
 IOTTB-->MQTT: subscribe /iot/screetlights/status/xy
-IOTTB->SUT: it's dark (rising edge on GPIO)
+IOTTB->SUT: it's dark (falling edge on GPIO)
 SUT->SUT: switch the light on
 IOTTB->IOTTB: expect mqtt message\nwithin a short amount of time
 SUT->MQTT: publish /iot/streetlights/status/xy\n{ light: on } 
@@ -67,10 +67,10 @@ activate MQTT
 
 SUT-->MQTT: subscribe /iot/screetlights/cmd/xy
 IOTTB->MQTT: publish /iot/streetlights/cmd/xy\n{ light: on, cmdId: 2 }
-IOTTB->IOTTB: expect rising edge on GPIO\nwithin a short amount of time
+IOTTB->IOTTB: expect falling edge on GPIO\nwithin a short amount of time
 MQTT-->SUT: onMessage
 SUT->SUT: switch the light on
-SUT-->IOTTB: rising edge on GPIO
+SUT-->IOTTB: falling edge on GPIO
 IOTTB->IOTTB: assert(light).toBe(on)
 ...
 @enduml
@@ -89,10 +89,10 @@ activate IOTTB
 activate SUT
 activate MQTT
 
-IOTTB->SUT: it's dark (rising edge on GPIO)
-IOTTB->IOTTB: expect rising edge on GPIO\nwithin a short amount of time
+IOTTB->SUT: it's dark (falling edge on GPIO)
+IOTTB->IOTTB: expect falling edge on GPIO\nwithin a short amount of time
 SUT->SUT: switch the light on
-SUT-->IOTTB: rising edge on GPIO
+SUT-->IOTTB: falling edge on GPIO
 IOTTB->IOTTB: assert(light).toBe(on)
 ...
 @enduml
