@@ -45,7 +45,7 @@ public class MqttMqtt {
 
 		final Status resultingStatus = new Status(Status.STATUS_OFF, Constants.CMD_ON_ID);
 		final MqttLightStatusCallback callback = new MqttLightStatusCallback(resultingStatus);
-		
+
 		client.setCallback(callback);
 		client.subscribe(Constants.TOPIC_STREETLIGHT_STATUS + "/" + SUT_ID);
 
@@ -61,16 +61,16 @@ public class MqttMqtt {
 
 		Assert.assertEquals(Status.STATUS_ON, resultingStatus.getLight());
 	}
-	
+
 	@Test
 	public void testLightsOffResponseWhenMessageSent() throws Exception {
 
 		// first switch the lights on
 		testLightsOnResponseWhenMessageSent();
-		
+
 		final Status resultingStatus = new Status(Status.STATUS_ON, Constants.CMD_OFF_ID);
 		final MqttLightStatusCallback callback = new MqttLightStatusCallback(resultingStatus);
-		
+
 		client.setCallback(callback);
 		client.subscribe(Constants.TOPIC_STREETLIGHT_STATUS + "/" + SUT_ID);
 

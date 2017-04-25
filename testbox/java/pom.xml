@@ -40,7 +40,6 @@
 			<version>4.12</version>
 		</dependency>
 
-
 	</dependencies>
 
 	<build>
@@ -70,41 +69,6 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>wagon-maven-plugin</artifactId>
-				<version>1.0</version>
-				<executions>
-					<execution>
-						<id>upload-testbox</id>
-						<phase>package</phase>
-						<goals>
-							<goal>upload</goal>
-						</goals>
-						<configuration>
-							<fromDir>./target/</fromDir>
-							<includes>testbox*.jar</includes>
-							<url>${testbox.url}</url>
-							<toDir>/home/pi</toDir>
-						</configuration>
-					</execution>
-					<execution>
-						<id>run tests</id>
-						<phase>package</phase>
-						<goals>
-							<goal>sshexec</goal>
-						</goals>
-						<configuration>
-							<url>${testbox.url}</url>
-							<displayCommandOutputs>true</displayCommandOutputs>
-							<failOnError>true</failOnError>
-							<commands>
-								<command>sudo java -jar testbox-${project.version}.jar</command>
-							</commands>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
 		</plugins>
 		<extensions>
 			<extension>
@@ -113,7 +77,51 @@
 				<version>2.8</version>
 			</extension>
 		</extensions>
-
 	</build>
+
+	<profiles>
+		<profile>
+			<id>autodeploy</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>wagon-maven-plugin</artifactId>
+						<version>1.0</version>
+						<executions>
+							<execution>
+								<id>upload-testbox</id>
+								<phase>package</phase>
+								<goals>
+									<goal>upload</goal>
+								</goals>
+								<configuration>
+									<fromDir>./target/</fromDir>
+									<includes>testbox*.jar</includes>
+									<url>${testbox.url}</url>
+									<toDir>/home/pi</toDir>
+								</configuration>
+							</execution>
+							<execution>
+								<id>run tests</id>
+								<phase>package</phase>
+								<goals>
+									<goal>sshexec</goal>
+								</goals>
+								<configuration>
+									<url>${testbox.url}</url>
+									<displayCommandOutputs>true</displayCommandOutputs>
+									<failOnError>true</failOnError>
+									<commands>
+										<command>sudo java -jar testbox-${project.version}.jar</command>
+									</commands>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 
 </project>
