@@ -86,7 +86,7 @@ def switch_light_off(cmdId):
     mqtt_client.publish(TOPIC_STREETLIGHT_STATUS, json.dumps(status))
 
 
-def on_light_sensor_event():
+def on_light_sensor_event(channel):
     light_sensor_state = GPIO.input(CHANNEL_IN_LIGHT_SENSOR)
     if (light_sensor_state == GPIO.HIGH):
         switch_light_off("")
