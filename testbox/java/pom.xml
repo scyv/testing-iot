@@ -6,7 +6,7 @@
 	<version>0.0.1-SNAPSHOT</version>
 
 	<properties>
-		<testbox.url>scp://pi:testbox2017@testbox/</testbox.url>
+		<testbox.url>scp://pi:testbox2017@192.168.42.101/</testbox.url>
 	</properties>
 
 	<dependencies>

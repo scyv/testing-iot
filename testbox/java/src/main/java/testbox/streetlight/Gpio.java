@@ -22,7 +22,7 @@ public class Gpio {
 		inputLightStatus.setShutdownOptions(true, PinState.LOW, PinPullResistance.PULL_DOWN);
 		outputLightSensor.setShutdownOptions(true, PinState.LOW, PinPullResistance.PULL_DOWN);
 	}
-
+	
 	public static void addListener(GpioPinDigitalInput input, GpioPinListenerDigital listener) {
 		input.addListener(listener);
 		input.setDebounce(200);
